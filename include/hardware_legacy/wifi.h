@@ -148,6 +148,12 @@ int wifi_change_fw_path(const char *fwpath);
  */
 int wifi_set_mode(int mode);
 
+// Engle add for MTK, start
+#ifdef TARGET_MTK
+void wifi_set_power(int enable);
+#endif
+// Engle add for MTK, end
+
 /**
  * Check and create if necessary initial entropy file
  */

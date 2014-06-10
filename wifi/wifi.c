@@ -133,6 +133,8 @@ static const char P2P_CONFIG_FILE[]     = "/data/misc/wifi/p2p_supplicant.conf";
 static const char CONTROL_IFACE_PATH[]  = "/data/misc/wifi/sockets";
 static const char MODULE_FILE[]         = "/proc/modules";
 
+#define WIFI_POWER_PATH     "/dev/wmtWifi"
+
 static const char IFNAME[]              = "IFNAME=";
 #define IFNAMELEN			(sizeof(IFNAME) - 1)
 static const char WPA_EVENT_IGNORE[]    = "CTRL-EVENT-IGNORE ";
@@ -333,6 +335,13 @@ int wifi_load_driver()
     return -1;
 #else
     property_set(DRIVER_PROP_NAME, "ok");
+
+// Engle add for MTK, start
+#ifdef TARGET_MTK    
+    wifi_set_power(1);
+#endif
+// Engle add for MTK, start
+
     return 0;
 #endif
 }
@@ -340,6 +349,11 @@ int wifi_load_driver()
 int wifi_unload_driver()
 {
     usleep(200000); /* allow to finish interface down */
+// Engle add for MTK, start
+#ifdef TARGET_MTK    
+    wifi_set_power(1);
+#endif
+// Engle add for MTK, start
 #ifdef WIFI_DRIVER_MODULE_PATH
     if (rmmod(DRIVER_MODULE_NAME) == 0) {
         int count = 20; /* wait at most 10 seconds for completion */
@@ -1166,3 +1180,25 @@ int wifi_set_mode(int mode) {
     wifi_mode = mode;
     return 0;
 }
+
+#ifdef TARGET_MTK
+void wifi_set_power(int enable) {
+    int fd;
+    int len;
+    const char buffer = (enable ? '1' : '0');
+    fd = open(WIFI_POWER_PATH, O_WRONLY);
+    if (fd < 0) {
+        ALOGE("Open \"%s\" failed (%s)", WIFI_POWER_PATH, strerror(errno));
+        goto out;
+    }
+    len = write(fd, &buffer, 1);
+    if (len < 0) {
+        ALOGE("Set \"%s\" [%c] failed (%s)", WIFI_POWER_PATH, buffer, strerror(errno));
+        goto out;
+    }
+out:
+    if (fd > 0) {
+        close(fd);
+    }
+}
+#endif
