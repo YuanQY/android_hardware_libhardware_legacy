@@ -293,7 +293,7 @@ int wifi_load_driver()
 int wifi_unload_driver()
 {
     usleep(200000); /* allow to finish interface down */
-    wifi_set_power(1);
+    wifi_set_power(0);
     property_set(DRIVER_PROP_NAME, "unloaded");
     return 0;
 }
@@ -994,8 +994,8 @@ int wifi_wait_on_socket(char *buf, size_t buflen)
         return snprintf(buf, buflen, WPA_EVENT_TERMINATING " - connection closed");
     }
 
-    if (DBG)
-        ALOGD("%s:%d wifi_ctrl_recv return %d", __FUNCTION__, __LINE__, result);
+    // if (DBG)
+    //    ALOGD("%s:%d wifi_ctrl_recv return %d", __FUNCTION__, __LINE__, result);
     if (result < 0) {
         ALOGD("wifi_ctrl_recv failed: %s\n", strerror(errno));
         return snprintf(buf, buflen, WPA_EVENT_TERMINATING " - recv error");
@@ -1021,8 +1021,8 @@ int wifi_wait_on_socket(char *buf, size_t buflen)
     // Engle, add IFNAME=prefix, start
     memcpy(suffixBuf, buf, buflen);
     memset(buf, 0, buflen);
-    if (DBG)
-        ALOGD("%s:%d receive from (%s) is %s", __FUNCTION__, __LINE__, primary_iface, buf);
+    // if (DBG)
+    //     ALOGD("%s:%d receive from (%s) is %s", __FUNCTION__, __LINE__, primary_iface, suffixBuf);
     snprintf(buf, buflen, "%s%s %s", IFNAME, primary_iface, suffixBuf);
     nread = nread + IFNAMELEN + strlen(primary_iface) + 1;
     // Engle, add IFNAME=prefix, end
