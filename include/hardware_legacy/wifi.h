@@ -151,6 +151,8 @@ int wifi_set_mode(int mode);
 // Engle add for MTK, start
 #ifdef TARGET_MTK
 void wifi_set_power(int enable);
+void halDoCommand (const char* cmd);
+void halDoMonitor();
 #endif
 // Engle add for MTK, end
 

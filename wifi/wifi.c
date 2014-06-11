@@ -43,6 +43,10 @@
 #include "cutils/memory.h"
 #include "cutils/misc.h"
 #include "cutils/properties.h"
+// Engle add for MTK, start
+#ifdef TARGET_MTK
+#include <cutils/sockets.h>
+// Engle add for MTK, end
 #include "private/android_filesystem_config.h"
 #ifdef HAVE_LIBC_SYSTEM_PROPERTIES
 #define _REALLY_INCLUDE_SYS__SYSTEM_PROPERTIES_H_
@@ -1191,5 +1195,29 @@ out:
     if (fd > 0) {
         close(fd);
     }
+}
+
+void halDoCommand (const char* cmd) {
+	  char *final_cmd;
+    int sock = socket_local_client("hald", ANDROID_SOCKET_NAMESPACE_RESERVED, SOCK_STREAM);
+    if (sock < 0) {
+        ALOGE("Error connecting (%s)", strerror(errno));
+        return;
+    }
+    if (DBG)
+        ALOGD("hal cmd %s", cmd);
+    asprintf(&final_cmd, "%s %s", "hal", cmd);
+    if (write(sock, final_cmd, strlen(final_cmd) + 1) < 0) {
+    	  ALOGE("Hal cmd error: (%s)", strerror(errno));
+        free(final_cmd);
+        close(sock);
+    } else {
+        free(final_cmd);
+        close(sock);
+    	  halDoMonitor();
+    }
+}
+
+void halDoMonitor() {
 }
 #endif
