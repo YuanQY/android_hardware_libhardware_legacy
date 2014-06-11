@@ -1242,9 +1242,9 @@ int halDoMonitor(int sock) {
         if ((rc = read(sock, buffer, 0x1000)) <= 0) {
             int res = errno;
             if (rc == 0)
-                ALOGE(stderr, "Lost connection to Hald - did it crash?\n");
+                ALOGE("Lost connection to Hald - did it crash?\n");
             else
-                ALOGE(stderr, "Error reading data (%s)\n", strerror(errno));
+                ALOGE("Error reading data (%s)\n", strerror(errno));
             free(buffer);
             close(sock);
             if (rc == 0)
