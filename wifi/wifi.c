@@ -1208,17 +1208,75 @@ void halDoCommand (const char* cmd) {
     if (DBG)
         ALOGD("hal cmd %s", cmd);
     asprintf(&final_cmd, "%s %s", "hal", cmd);
-    if (write(sock, final_cmd, strlen(final_cmd) + 1) < 0) {
+    if (write(sock, final_cmd, strlen(final_cmd) + 1) <= 0) {
     	  ALOGE("Hal cmd error: (%s)", strerror(errno));
-        free(final_cmd);
+    	  free(final_cmd);
         close(sock);
     } else {
-        free(final_cmd);
-        close(sock);
-    	  halDoMonitor();
+    	  free(final_cmd);
+    	  halDoMonitor(sock);
     }
 }
 
-void halDoMonitor() {
+int halDoMonitor(int sock) {
+	  char *buffer = malloc(0x1000);
+
+    fd_set read_fds;
+    struct timeval to;
+    int rc = 0;
+
+    to.tv_sec = 10;
+    to.tv_usec = 0;
+
+    FD_ZERO(&read_fds);
+    FD_SET(sock, &read_fds);
+
+    if ((rc = select(sock +1, &read_fds, NULL, NULL, &to)) <= 0) {
+        int res = errno;
+        ALOGE(stderr, "Error in select (%s)\n", strerror(errno));
+        free(buffer);
+        close(sock);
+        return res;
+    } else {
+        memset(buffer, 0, 0x1000);
+        if ((rc = read(sock, buffer, 0x1000)) <= 0) {
+            int res = errno;
+            if (rc == 0)
+                ALOGE(stderr, "Lost connection to Hald - did it crash?\n");
+            else
+                ALOGE(stderr, "Error reading data (%s)\n", strerror(errno));
+            free(buffer);
+            close(sock);
+            if (rc == 0)
+                return ECONNRESET;
+            return res;
+        }
+
+        int offset = 0;
+        int i = 0;
+
+        for (i = 0; i < rc; i++) {
+            if (buffer[i] == '\0') {
+                int code;
+                char tmp[4];
+
+                strncpy(tmp, buffer + offset, 3);
+                tmp[3] = '\0';
+                code = atoi(tmp);
+                if (DBG)
+                    ALOGD("Hal cmd response: \"%s\"\n", buffer + offset);
+
+                if (code >= 200 && code < 400) {
+                    free(buffer);
+                    close(sock);
+                    return 0;
+                }
+                offset = i + 1;
+            }
+        }
+    }
+    free(buffer);
+    close(sock);
+    return 0;
 }
 #endif
