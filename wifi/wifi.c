@@ -46,6 +46,7 @@
 // Engle add for MTK, start
 #ifdef TARGET_MTK
 #include <cutils/sockets.h>
+#endif
 // Engle add for MTK, end
 #include "private/android_filesystem_config.h"
 #ifdef HAVE_LIBC_SYSTEM_PROPERTIES
