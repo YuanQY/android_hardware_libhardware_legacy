@@ -1170,13 +1170,13 @@ int wifi_change_fw_path(const char* fwpath) {
     if (DBG)
         ALOGD("wifi_change_fw_path [%s]", fwpath);
     if (strcmp(WIFI_DRIVER_FW_PATH_STA, fwpath) == 0) {
-    	  wifi_set_p2p_mod(0, 1);
+    	  wifi_set_p2p_mod(1, 0);
     	  return 0;
     } else if (strcmp(WIFI_DRIVER_FW_PATH_AP, fwpath) == 0) {
-        wifi_set_p2p_mod(1, 0);
+        wifi_set_p2p_mod(1, 1);
         return 0;
     } else if (strcmp(WIFI_DRIVER_FW_PATH_P2P, fwpath) == 0) {
-    	  wifi_set_p2p_mod(0, 1);
+    	  wifi_set_p2p_mod(1, 0);
     	  return 0;
     }
     ALOGE("Failed to write wlan fw path, unknow path");
