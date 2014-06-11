@@ -289,7 +289,6 @@ int is_wifi_driver_loaded() {
 
 int wifi_load_driver()
 {
-
     wifi_set_power(1);
     property_set(DRIVER_PROP_NAME, "ok");
     return 0;
@@ -297,8 +296,8 @@ int wifi_load_driver()
 
 int wifi_unload_driver()
 {
-    usleep(200000); /* allow to finish interface down */
-    wifi_set_power(0);
+    wifi_set_p2p_mod(0, 0);
+    wifi_set_power(1);
     property_set(DRIVER_PROP_NAME, "unloaded");
     return 0;
 }
@@ -1071,8 +1070,6 @@ int wifi_wait_for_event(char *buf, size_t buflen)
 
 void wifi_close_sockets()
 {
-    ALOGD("Enter wifi_close_sockets ctrl_conn %d monitor_conn %d exit_sockets[0] %d, exit_sockets[1] %d\n", 
-        ctrl_conn, monitor_conn, exit_sockets[0], exit_sockets[1]);
     if (ctrl_conn != NULL) {
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = NULL;
@@ -1234,7 +1231,7 @@ int halDoMonitor(int sock) {
 
     if ((rc = select(sock +1, &read_fds, NULL, NULL, &to)) <= 0) {
         int res = errno;
-        ALOGE(stderr, "Error in select (%s)\n", strerror(errno));
+        ALOGE("Error in select (%s)\n", strerror(errno));
         free(buffer);
         close(sock);
         return res;
@@ -1279,5 +1276,19 @@ int halDoMonitor(int sock) {
     free(buffer);
     close(sock);
     return 0;
+}
+
+void wifi_set_p2p_mod(int enableAP, int enableP2P) {
+    if (enableAP != 0) {
+        halDoCommand("load hostspot");
+    } else {
+        halDoCommand("unload hostspot");
+    }
+
+    if (enableP2P != 0) {
+        halDoCommand("load p2p");
+    } else {
+        halDoCommand("unload p2p");
+    }
 }
 #endif
