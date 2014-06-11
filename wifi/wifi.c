@@ -46,6 +46,7 @@
 // Engle add for MTK, start
 #ifdef TARGET_MTK
 #include <cutils/sockets.h>
+#include <dlfcn.h>
 #endif
 // Engle add for MTK, end
 #include "private/android_filesystem_config.h"
@@ -822,6 +823,63 @@ int wifi_start_supplicant(int p2p_supported)
     return -1;
 }
 
+// Engle add for MTK, start
+#ifdef TARGET_MTK
+
+int wifi_stop_supplicant(int p2p_supported)
+{
+    char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
+    int count = 50; /* wait at most 5 seconds for completion */
+    void *handle = dlopen("/system/lib/libpalwlan_mtk.so", RTLD_LAZY);
+    int ret = 0;
+    typedef void (*pal_set_wlan_down_t)();
+    typedef void (*pal_send_wlan_off_event_t)();
+
+    /* Check whether supplicant already stopped */
+    if (property_get(P2P_PROP_NAME, supp_status, NULL)
+        && strcmp(supp_status, "stopped") == 0) {
+        ret = 0;
+        goto out;
+    }
+
+    property_set("ctl.stop", P2P_SUPPLICANT_NAME);
+    sched_yield();
+
+    while (count-- > 0) {
+        if (property_get(P2P_PROP_NAME, supp_status, NULL)) {
+            if (strcmp(supp_status, "stopped") == 0) {
+            	  ret = 0;
+            	  goto out;
+            }
+        }
+        usleep(100000);
+    }
+    ALOGE("Failed to stop supplicant");
+    ret = -1;
+out:
+   if (handle != NULL) {
+   	    if (0 == ret) {
+		        pal_set_wlan_down_t pal_set_wlan_down = (pal_set_wlan_down_t)dlsym(handle, "pal_set_wlan_down");
+		        if (NULL == pal_set_wlan_down)
+		            ALOGE("Map pal_set_wlan_down error (%s)", dlerror());
+		        else
+		        	  pal_set_wlan_down();
+		        pal_send_wlan_off_event_t pal_send_wlan_off_event = (pal_send_wlan_off_event_t)dlsym(handle, "pal_send_wlan_off_event");
+		        if (NULL == pal_set_wlan_down)
+		            ALOGE("Map pal_send_wlan_off_event error (%s)", dlerror());
+		        else
+		            pal_send_wlan_off_event();
+		        if (DBG && pal_set_wlan_down != NULL && pal_send_wlan_off_event != NULL)
+		            ALOGD("[PAL] wifi_stop_supplicant pass\n");
+        }
+        dlclose(handle);
+        
+    }
+    return -1;
+}
+
+#else
+
 int wifi_stop_supplicant(int p2p_supported)
 {
     char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
@@ -861,6 +919,8 @@ int wifi_stop_supplicant(int p2p_supported)
     ALOGE("Failed to stop supplicant");
     return -1;
 }
+
+#endif
 
 int wifi_connect_on_socket_path(const char *path)
 {
