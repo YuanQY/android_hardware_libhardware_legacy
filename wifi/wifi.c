@@ -1196,6 +1196,7 @@ out:
     if (fd > 0) {
         close(fd);
     }
+    halDoCommand(enable ? "load wifi" : "unload wifi");
 }
 
 void halDoCommand (const char* cmd) {
