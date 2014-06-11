@@ -153,7 +153,7 @@ int wifi_set_mode(int mode);
 void wifi_set_power(int enable);
 void halDoCommand (const char* cmd);
 int halDoMonitor(int sock);
-void wifi_set_p2p_mod(int enableAP, int enableP2P);
+void wifi_set_p2p_mod(int enableP2P, int enableAP);
 #endif
 // Engle add for MTK, end
 
