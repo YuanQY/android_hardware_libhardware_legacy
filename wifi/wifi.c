@@ -1142,6 +1142,8 @@ const char *wifi_get_fw_path(int fw_type)
     return NULL;
 }
 
+// Engle, add for MTK, start
+#ifndef TARGET_MTK
 int wifi_change_fw_path(const char *fwpath)
 {
     int len;
@@ -1163,6 +1165,25 @@ int wifi_change_fw_path(const char *fwpath)
     close(fd);
     return ret;
 }
+#else
+int wifi_change_fw_path(const char* fwpath) {
+    if (DBG)
+        ALOGD("wifi_change_fw_path [%s]", fwpath);
+    if (strcmp(WIFI_DRIVER_FW_PATH_STA, fwpath) == 0) {
+    	  wifi_set_p2p_mod(0, 1);
+    	  return 0;
+    } else if (strcmp(WIFI_DRIVER_FW_PATH_AP, fwpath) == 0) {
+        wifi_set_p2p_mod(1, 0);
+        return 0;
+    } else if (strcmp(WIFI_DRIVER_FW_PATH_P2P, fwpath) == 0) {
+    	  wifi_set_p2p_mod(0, 1);
+    	  return 0;
+    }
+    ALOGE("Failed to write wlan fw path, unknow path");
+    return -1;
+}
+#endif
+// Engle, add for MTK, end
 
 int wifi_set_mode(int mode) {
     if (DBG)
@@ -1171,6 +1192,7 @@ int wifi_set_mode(int mode) {
     return 0;
 }
 
+// Engle, add for MTK, start
 #ifdef TARGET_MTK
 void wifi_set_power(int enable) {
     int fd;
@@ -1292,3 +1314,4 @@ void wifi_set_p2p_mod(int enableAP, int enableP2P) {
     }
 }
 #endif
+// Engle, add for MTK, end
