@@ -1302,15 +1302,14 @@ int halDoMonitor(int sock) {
 
 void wifi_set_p2p_mod(int enableAP, int enableP2P) {
     if (enableAP != 0) {
-        halDoCommand("load hostspot");
-    } else {
-        halDoCommand("unload hostspot");
-    }
-
-    if (enableP2P != 0) {
-        halDoCommand("load p2p");
+        if (enableP2P != 0) {
+            halDoCommand("load hostspot");
+        } else {
+            halDoCommand("load p2p");
+        }
     } else {
         halDoCommand("unload p2p");
+        halDoCommand("unload hostspot");
     }
 }
 #endif
