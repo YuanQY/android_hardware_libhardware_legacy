@@ -712,6 +712,109 @@ cleanup:
 }
 #endif /* USES_TI_MAC80211 */
 
+// Engle add for MTK, start
+#ifdef TARGET_MTK
+int wifi_start_supplicant(int p2p_supported)
+{
+    char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
+    int count = 200; /* wait at most 20 seconds for completion */
+    void *handle = dlopen("/system/lib/libpalwlan_mtk.so", RTLD_LAZY);
+    int ret = 0;
+    typedef void (*pal_set_wlan_up_t)();
+    typedef void (*pal_send_wlan_on_event_t)();
+    if (DBG)
+        ALOGD("%s:%d Enter,  p2p_supported %d", __FUNCTION__, __LINE__, p2p_supported);
+
+    if (p2p_supported) {
+        strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
+        strcpy(supplicant_prop_name, P2P_PROP_NAME);
+
+        /* Ensure p2p config file is created */
+        if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
+            ALOGE("Failed to create a p2p config file");
+            ret = -1;
+            goto out;
+        }
+
+    } else {
+        strcpy(supplicant_name, SUPPLICANT_NAME);
+        strcpy(supplicant_prop_name, SUPP_PROP_NAME);
+    }
+
+    /* Check whether already running */
+    if (property_get(supplicant_name, supp_status, NULL)
+            && strcmp(supp_status, "running") == 0) {
+        if (DBG)
+            ALOGD("%s:%d get %s status %s", __FUNCTION__, __LINE__, supplicant_name, supp_status);
+        ret = 0;
+        goto out;
+    }
+
+    /* Before starting the daemon, make sure its config file exists */
+    if (ensure_config_file_exists(SUPP_CONFIG_FILE) < 0) {
+        ALOGE("Wi-Fi will not be enabled");
+        ret = -1;
+        goto out;
+    }
+
+    if (ensure_entropy_file_exists() < 0) {
+        ALOGE("Wi-Fi entropy file was not created");
+    }
+
+    /* Clear out any stale socket files that might be left over. */
+    wpa_ctrl_cleanup();
+
+    /* Reset sockets used for exiting from hung state */
+    exit_sockets[0] = exit_sockets[1] = -1;
+
+    property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
+
+    property_set("ctl.start", supplicant_name);
+    if (DBG)
+        ALOGD("%s:%d set ctl.start to %s", __FUNCTION__, __LINE__, supplicant_name);
+    sched_yield();
+    if (DBG)
+        ALOGD("%s:%d After call sched_yield", __FUNCTION__, __LINE__);
+
+    while (count-- > 0) {
+       if (DBG)
+           ALOGD("%s:%d Before get %s status", __FUNCTION__, __LINE__, supplicant_prop_name);
+        if (property_get(supplicant_prop_name, supp_status, NULL)) {
+            if (DBG)
+                ALOGD("%s:%d get %s status %s", __FUNCTION__, __LINE__, supplicant_prop_name, supp_status);
+
+            if (strcmp(supp_status, "running") == 0) {
+                ret = 0;
+                goto out;
+            }
+        }
+        usleep(100000);
+    }
+    ret = -1;
+out:
+   if (handle != NULL) {
+   	    if (0 == ret) {
+		        pal_set_wlan_up_t pal_set_wlan_up = (pal_set_wlan_up_t)dlsym(handle, "pal_set_wlan_up");
+		        if (NULL == pal_set_wlan_up)
+		            ALOGE("Map pal_set_wlan_up error (%s)", dlerror());
+		        else
+		        	  pal_set_wlan_up();
+		        pal_send_wlan_on_event_t pal_send_wlan_on_event = (pal_send_wlan_on_event_t)dlsym(handle, "pal_send_wlan_on_event");
+		        if (NULL == pal_send_wlan_on_event)
+		            ALOGE("Map pal_send_wlan_on_event error (%s)", dlerror());
+		        else
+		            pal_send_wlan_on_event();
+		        if (DBG && pal_set_wlan_down != NULL && pal_send_wlan_off_event != NULL)
+		            ALOGD("[PAL] wifi_start_supplicant pass\n");
+        }
+        dlclose(handle);
+        
+    }
+    return ret;
+}
+
+#else
+
 int wifi_start_supplicant(int p2p_supported)
 {
     char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
@@ -822,6 +925,8 @@ int wifi_start_supplicant(int p2p_supported)
     }
     return -1;
 }
+#endif
+// Engle add for MTK, end
 
 // Engle add for MTK, start
 #ifdef TARGET_MTK
@@ -865,7 +970,7 @@ out:
 		        else
 		        	  pal_set_wlan_down();
 		        pal_send_wlan_off_event_t pal_send_wlan_off_event = (pal_send_wlan_off_event_t)dlsym(handle, "pal_send_wlan_off_event");
-		        if (NULL == pal_set_wlan_down)
+		        if (NULL == pal_send_wlan_off_event)
 		            ALOGE("Map pal_send_wlan_off_event error (%s)", dlerror());
 		        else
 		            pal_send_wlan_off_event();
@@ -875,7 +980,7 @@ out:
         dlclose(handle);
         
     }
-    return -1;
+    return ret;
 }
 
 #else
