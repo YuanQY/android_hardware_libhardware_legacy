@@ -1529,9 +1529,5 @@ void wifi_set_p2p_mod(int enableP2P, int enableAP) {
         halDoCommand("unload hostspot");
     }
 }
-
-int wifi_wpa_ctrl_cleanup() {
-    return 0;
-}
 #endif
 // Engle, add for MTK, end
