@@ -77,7 +77,7 @@ static char primary_iface[PROPERTY_VALUE_MAX];
 // sockets is in
 
 #ifdef USES_TI_MAC80211
-#define P2P_INTERFACE			"p2p0"
+#define P2P_INTERFACE            "p2p0"
 struct nl_sock *nl_soc;
 struct nl_cache *nl_cache;
 struct genl_family *nl80211;
@@ -90,18 +90,18 @@ struct genl_family *nl80211;
 #define WIFI_DRIVER_MODULE_AP_ARG       ""
 #endif
 #ifndef WIFI_FIRMWARE_LOADER
-#define WIFI_FIRMWARE_LOADER		""
+#define WIFI_FIRMWARE_LOADER        ""
 #endif
-#define WIFI_TEST_INTERFACE		"sta"
+#define WIFI_TEST_INTERFACE        "sta"
 
 #ifndef WIFI_DRIVER_FW_PATH_STA
-#define WIFI_DRIVER_FW_PATH_STA		NULL
+#define WIFI_DRIVER_FW_PATH_STA        NULL
 #endif
 #ifndef WIFI_DRIVER_FW_PATH_AP
-#define WIFI_DRIVER_FW_PATH_AP		NULL
+#define WIFI_DRIVER_FW_PATH_AP        NULL
 #endif
 #ifndef WIFI_DRIVER_FW_PATH_P2P
-#define WIFI_DRIVER_FW_PATH_P2P		NULL
+#define WIFI_DRIVER_FW_PATH_P2P        NULL
 #endif
 
 #ifdef WIFI_EXT_MODULE_NAME
@@ -117,7 +117,7 @@ static const char EXT_MODULE_PATH[] = WIFI_EXT_MODULE_PATH;
 #endif
 
 #ifndef WIFI_DRIVER_FW_PATH_PARAM
-#define WIFI_DRIVER_FW_PATH_PARAM	"/sys/module/wlan/parameters/fwpath"
+#define WIFI_DRIVER_FW_PATH_PARAM    "/sys/module/wlan/parameters/fwpath"
 #endif
 
 // Engle, add for MTK, start
@@ -141,6 +141,8 @@ static const char SUPPLICANT_NAME[]     = "wpa_supplicant";
 static const char SUPP_PROP_NAME[]      = "init.svc.wpa_supplicant";
 static const char P2P_SUPPLICANT_NAME[] = "p2p_supplicant";
 static const char P2P_PROP_NAME[]       = "init.svc.p2p_supplicant";
+static const char AP_SUPPLICANT_NAME[]  = "ap_daemon";
+static const char AP_PROP_NAME[]        = "init.svc.ap_daemon";
 static const char SUPP_CONFIG_TEMPLATE[]= "/system/etc/wifi/wpa_supplicant.conf";
 static const char SUPP_CONFIG_FILE[]    = "/data/misc/wifi/wpa_supplicant.conf";
 static const char P2P_CONFIG_FILE[]     = "/data/misc/wifi/p2p_supplicant.conf";
@@ -150,7 +152,7 @@ static const char MODULE_FILE[]         = "/proc/modules";
 #define WIFI_POWER_PATH     "/dev/wmtWifi"
 
 static const char IFNAME[]              = "IFNAME=";
-#define IFNAMELEN			(sizeof(IFNAME) - 1)
+#define IFNAMELEN            (sizeof(IFNAME) - 1)
 static const char WPA_EVENT_IGNORE[]    = "CTRL-EVENT-IGNORE ";
 
 static const char SUPP_ENTROPY_FILE[]   = WIFI_ENTROPY_FILE;
@@ -714,20 +716,32 @@ cleanup:
 
 // Engle add for MTK, start
 #ifdef TARGET_MTK
-int wifi_start_supplicant(int p2p_supported)
+int wifi_start_supplicant(int supplicantType)
 {
     char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
     int count = 200; /* wait at most 20 seconds for completion */
+#ifdef HAVE_LIBC_SYSTEM_PROPERTIES
+    const prop_info *pi;
+    unsigned serial = 0, i;
+#endif
     void *handle = dlopen("/system/lib/libpalwlan_mtk.so", RTLD_LAZY);
     int ret = 0;
     typedef void (*pal_set_wlan_up_t)();
     typedef void (*pal_send_wlan_on_event_t)();
     if (DBG)
-        ALOGD("%s:%d Enter,  p2p_supported %d", __FUNCTION__, __LINE__, p2p_supported);
+        ALOGD(" wifi_start_supplicant [%d]", supplicantType);
 
-    if (p2p_supported) {
-        strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
-        strcpy(supplicant_prop_name, P2P_PROP_NAME);
+    if (0 == supplicantType) {
+        strcpy(supplicant_name, SUPPLICANT_NAME);
+        strcpy(supplicant_prop_name, SUPP_PROP_NAME);
+    } else {
+          if (1 == supplicantType) {
+            strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
+            strcpy(supplicant_prop_name, P2P_PROP_NAME);
+        } else { //2 mean ap_deamon for sta+p2p mode?
+            strcpy(supplicant_name, AP_SUPPLICANT_NAME);
+            strcpy(supplicant_prop_name, AP_PROP_NAME);
+        }
 
         /* Ensure p2p config file is created */
         if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
@@ -735,10 +749,7 @@ int wifi_start_supplicant(int p2p_supported)
             ret = -1;
             goto out;
         }
-
-    } else {
-        strcpy(supplicant_name, SUPPLICANT_NAME);
-        strcpy(supplicant_prop_name, SUPP_PROP_NAME);
+        
     }
 
     /* Check whether already running */
@@ -767,18 +778,51 @@ int wifi_start_supplicant(int p2p_supported)
     /* Reset sockets used for exiting from hung state */
     exit_sockets[0] = exit_sockets[1] = -1;
 
+#ifdef HAVE_LIBC_SYSTEM_PROPERTIES
+    /*
+     * Get a reference to the status property, so we can distinguish
+     * the case where it goes stopped => running => stopped (i.e.,
+     * it start up, but fails right away) from the case in which
+     * it starts in the stopped state and never manages to start
+     * running at all.
+     */
+    pi = __system_property_find(supplicant_prop_name);
+    if (pi != NULL) {
+        serial = __system_property_serial(pi);
+    }
+#endif
+
     property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
 
     property_set("ctl.start", supplicant_name);
+
     if (DBG)
         ALOGD("%s:%d set ctl.start to %s", __FUNCTION__, __LINE__, supplicant_name);
+
     sched_yield();
+
     if (DBG)
         ALOGD("%s:%d After call sched_yield", __FUNCTION__, __LINE__);
 
     while (count-- > 0) {
        if (DBG)
            ALOGD("%s:%d Before get %s status", __FUNCTION__, __LINE__, supplicant_prop_name);
+#ifdef HAVE_LIBC_SYSTEM_PROPERTIES
+        if (pi == NULL) {
+            pi = __system_property_find(supplicant_prop_name);
+        }
+        if (pi != NULL) {
+            __system_property_read(pi, NULL, supp_status);
+            if (strcmp(supp_status, "running") == 0) {
+                ret = 0;
+                goto out;
+            } else if (__system_property_serial(pi) != serial &&
+                    strcmp(supp_status, "stopped") == 0) {
+                ret = -1;
+                goto out;
+            }
+        }
+#else
         if (property_get(supplicant_prop_name, supp_status, NULL)) {
             if (DBG)
                 ALOGD("%s:%d get %s status %s", __FUNCTION__, __LINE__, supplicant_prop_name, supp_status);
@@ -788,24 +832,25 @@ int wifi_start_supplicant(int p2p_supported)
                 goto out;
             }
         }
+#endif
         usleep(100000);
     }
     ret = -1;
 out:
    if (handle != NULL) {
-   	    if (0 == ret) {
-		        pal_set_wlan_up_t pal_set_wlan_up = (pal_set_wlan_up_t)dlsym(handle, "pal_set_wlan_up");
-		        if (NULL == pal_set_wlan_up)
-		            ALOGE("Map pal_set_wlan_up error (%s)", dlerror());
-		        else
-		        	  pal_set_wlan_up();
-		        pal_send_wlan_on_event_t pal_send_wlan_on_event = (pal_send_wlan_on_event_t)dlsym(handle, "pal_send_wlan_on_event");
-		        if (NULL == pal_send_wlan_on_event)
-		            ALOGE("Map pal_send_wlan_on_event error (%s)", dlerror());
-		        else
-		            pal_send_wlan_on_event();
-		        if (DBG && pal_set_wlan_down != NULL && pal_send_wlan_off_event != NULL)
-		            ALOGD("[PAL] wifi_start_supplicant pass\n");
+       if (0 == ret) {
+            pal_set_wlan_up_t pal_set_wlan_up = (pal_set_wlan_up_t)dlsym(handle, "pal_set_wlan_up");
+            if (NULL == pal_set_wlan_up)
+                ALOGE("Map pal_set_wlan_up error (%s)", dlerror());
+            else
+                  pal_set_wlan_up();
+            pal_send_wlan_on_event_t pal_send_wlan_on_event = (pal_send_wlan_on_event_t)dlsym(handle, "pal_send_wlan_on_event");
+            if (NULL == pal_send_wlan_on_event)
+                ALOGE("Map pal_send_wlan_on_event error (%s)", dlerror());
+            else
+                pal_send_wlan_on_event();
+            if (DBG && pal_set_wlan_up != NULL && pal_send_wlan_on_event != NULL)
+                    ALOGD("[PAL] wifi_start_supplicant pass\n");
         }
         dlclose(handle);
         
@@ -953,8 +998,8 @@ int wifi_stop_supplicant(int p2p_supported)
     while (count-- > 0) {
         if (property_get(P2P_PROP_NAME, supp_status, NULL)) {
             if (strcmp(supp_status, "stopped") == 0) {
-            	  ret = 0;
-            	  goto out;
+                  ret = 0;
+                  goto out;
             }
         }
         usleep(100000);
@@ -963,19 +1008,19 @@ int wifi_stop_supplicant(int p2p_supported)
     ret = -1;
 out:
    if (handle != NULL) {
-   	    if (0 == ret) {
-		        pal_set_wlan_down_t pal_set_wlan_down = (pal_set_wlan_down_t)dlsym(handle, "pal_set_wlan_down");
-		        if (NULL == pal_set_wlan_down)
-		            ALOGE("Map pal_set_wlan_down error (%s)", dlerror());
-		        else
-		        	  pal_set_wlan_down();
-		        pal_send_wlan_off_event_t pal_send_wlan_off_event = (pal_send_wlan_off_event_t)dlsym(handle, "pal_send_wlan_off_event");
-		        if (NULL == pal_send_wlan_off_event)
-		            ALOGE("Map pal_send_wlan_off_event error (%s)", dlerror());
-		        else
-		            pal_send_wlan_off_event();
-		        if (DBG && pal_set_wlan_down != NULL && pal_send_wlan_off_event != NULL)
-		            ALOGD("[PAL] wifi_stop_supplicant pass\n");
+       if (0 == ret) {
+            pal_set_wlan_down_t pal_set_wlan_down = (pal_set_wlan_down_t)dlsym(handle, "pal_set_wlan_down");
+            if (NULL == pal_set_wlan_down)
+                ALOGE("Map pal_set_wlan_down error (%s)", dlerror());
+            else
+                  pal_set_wlan_down();
+            pal_send_wlan_off_event_t pal_send_wlan_off_event = (pal_send_wlan_off_event_t)dlsym(handle, "pal_send_wlan_off_event");
+            if (NULL == pal_send_wlan_off_event)
+                ALOGE("Map pal_send_wlan_off_event error (%s)", dlerror());
+            else
+                pal_send_wlan_off_event();
+            if (DBG && pal_set_wlan_down != NULL && pal_send_wlan_off_event != NULL)
+                ALOGD("[PAL] wifi_stop_supplicant pass\n");
         }
         dlclose(handle);
         
@@ -1335,14 +1380,14 @@ int wifi_change_fw_path(const char* fwpath) {
     if (DBG)
         ALOGD("wifi_change_fw_path [%s]", fwpath);
     if (strcmp(WIFI_DRIVER_FW_PATH_STA, fwpath) == 0) {
-    	  wifi_set_p2p_mod(1, 0);
-    	  return 0;
+          wifi_set_p2p_mod(1, 0);
+          return 0;
     } else if (strcmp(WIFI_DRIVER_FW_PATH_AP, fwpath) == 0) {
         wifi_set_p2p_mod(1, 1);
         return 0;
     } else if (strcmp(WIFI_DRIVER_FW_PATH_P2P, fwpath) == 0) {
-    	  wifi_set_p2p_mod(1, 0);
-    	  return 0;
+          wifi_set_p2p_mod(1, 0);
+          return 0;
     }
     ALOGE("Failed to write wlan fw path, unknow path");
     return -1;
@@ -1384,7 +1429,7 @@ out:
 }
 
 void halDoCommand (const char* cmd) {
-	  char *final_cmd;
+      char *final_cmd;
     int sock = socket_local_client("hald", ANDROID_SOCKET_NAMESPACE_RESERVED, SOCK_STREAM);
     if (sock < 0) {
         ALOGE("Error connecting (%s)", strerror(errno));
@@ -1394,17 +1439,17 @@ void halDoCommand (const char* cmd) {
         ALOGD("hal cmd %s", cmd);
     asprintf(&final_cmd, "%s %s", "hal", cmd);
     if (write(sock, final_cmd, strlen(final_cmd) + 1) <= 0) {
-    	  ALOGE("Hal cmd error: (%s)", strerror(errno));
-    	  free(final_cmd);
+          ALOGE("Hal cmd error: (%s)", strerror(errno));
+          free(final_cmd);
         close(sock);
     } else {
-    	  free(final_cmd);
-    	  halDoMonitor(sock);
+          free(final_cmd);
+          halDoMonitor(sock);
     }
 }
 
 int halDoMonitor(int sock) {
-	  char *buffer = malloc(0x1000);
+      char *buffer = malloc(0x1000);
 
     fd_set read_fds;
     struct timeval to;
@@ -1476,6 +1521,10 @@ void wifi_set_p2p_mod(int enableP2P, int enableAP) {
         halDoCommand("unload p2p");
         halDoCommand("unload hostspot");
     }
+}
+
+int wifi_wpa_ctrl_cleanup() {
+    return 0;
 }
 #endif
 // Engle, add for MTK, end
