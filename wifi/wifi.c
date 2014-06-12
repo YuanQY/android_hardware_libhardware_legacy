@@ -379,11 +379,18 @@ int update_ctrl_interface(const char *config_file) {
         return 0;
     }
 
+// Engle, add for MTK, start
+#ifdef TARGET_MTK
+    strcpy(ifc, IFACE_DIR);
+#else
     if (!strcmp(config_file, SUPP_CONFIG_FILE)) {
         property_get("wifi.interface", ifc, WIFI_TEST_INTERFACE);
     } else {
         strcpy(ifc, CONTROL_IFACE_PATH);
     }
+#endif
+// Engle, add for MTK, end
+
     /* Assume file is invalid to begin with */
     ret = -1;
     /*
@@ -735,7 +742,7 @@ int wifi_start_supplicant(int supplicantType)
         strcpy(supplicant_name, SUPPLICANT_NAME);
         strcpy(supplicant_prop_name, SUPP_PROP_NAME);
     } else {
-          if (1 == supplicantType) {
+        if (1 == supplicantType) {
             strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, P2P_PROP_NAME);
         } else { //2 mean ap_deamon for sta+p2p mode?
