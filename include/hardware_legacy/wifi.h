@@ -134,8 +134,18 @@ const char *get_dhcp_error_string();
  * Return the path to requested firmware
  */
 #define WIFI_GET_FW_PATH_STA	0
+#ifndef TARGET_MTK
+
 #define WIFI_GET_FW_PATH_AP	1
 #define WIFI_GET_FW_PATH_P2P	2
+
+#else
+
+#define WIFI_GET_FW_PATH_P2P	1
+#define WIFI_GET_FW_PATH_AP	    2
+
+#endif
+
 const char *wifi_get_fw_path(int fw_type);
 
 /**

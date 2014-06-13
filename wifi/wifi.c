@@ -83,6 +83,11 @@ struct nl_cache *nl_cache;
 struct genl_family *nl80211;
 #endif
 
+#ifdef TARGET_MTK
+#define P2P_INTERFACE            "p2p0"
+#define AP_INTERFACE             "ap0"
+#endif
+
 #ifndef WIFI_DRIVER_MODULE_ARG
 #define WIFI_DRIVER_MODULE_ARG          ""
 #endif
@@ -781,25 +786,32 @@ int wifi_start_supplicant(int supplicantType)
     if (DBG)
         ALOGD(" wifi_start_supplicant [%d]", supplicantType);
 
-    if (0 == supplicantType) {
-        strcpy(supplicant_name, SUPPLICANT_NAME);
-        strcpy(supplicant_prop_name, SUPP_PROP_NAME);
-    } else {
-        if (1 == supplicantType) {
+    switch(supplicantType) {
+        case WIFI_GET_FW_PATH_STA:
+            strcpy(supplicant_name, SUPPLICANT_NAME);
+            strcpy(supplicant_prop_name, SUPP_PROP_NAME);
+            break;
+        case WIFI_GET_FW_PATH_P2P:
             strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, P2P_PROP_NAME);
-        } else { //2 mean ap_deamon for sta+p2p mode?
+            break;
+        case WIFI_GET_FW_PATH_AP:
             strcpy(supplicant_name, AP_SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, AP_PROP_NAME);
-        }
+            break;
+        default:
+        	ALOGE("Unkown type [%d]");
+        	ret = -1;
+            goto out;
+    }
 
+	if (supplicantType != WIFI_GET_FW_PATH_STA) {
         /* Ensure p2p config file is created */
         if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
             ALOGE("Failed to create a p2p config file");
             ret = -1;
             goto out;
-        }
-        
+        }        
     }
 
     /* Check whether already running */
