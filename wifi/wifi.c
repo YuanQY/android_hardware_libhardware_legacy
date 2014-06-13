@@ -167,9 +167,9 @@ static unsigned char dummy_key[21] = { 0x02, 0x11, 0xbe, 0x33, 0x43, 0x35,
                                        0xf3, 0xf4, 0xf5 };
 
 /* Is either SUPPLICANT_NAME or P2P_SUPPLICANT_NAME */
-static char supplicant_name[PROPERTY_VALUE_MAX];
+static char supplicant_name[PROPERTY_VALUE_MAX] = {0};
 /* Is either SUPP_PROP_NAME or P2P_PROP_NAME */
-static char supplicant_prop_name[PROPERTY_KEY_MAX];
+static char supplicant_prop_name[PROPERTY_KEY_MAX] = {0};
 
 
 #ifdef SAMSUNG_WIFI
@@ -1061,6 +1061,11 @@ int wifi_stop_supplicant(int p2p_supported)
     int ret = 0;
     typedef void (*pal_set_wlan_down_t)();
     typedef void (*pal_send_wlan_off_event_t)();
+    if (p2p_supported && strcmp(supplicant_name, "") == 0) {
+        strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
+        strcpy(supplicant_prop_name, P2P_PROP_NAME);
+    }
+
     if (DBG)
         ALOGD("%s:%d enter, Stop \"%s\" [%d]", __FUNCTION__, __LINE__, supplicant_name, p2p_supported);
 
