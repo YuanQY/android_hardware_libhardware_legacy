@@ -253,12 +253,39 @@ const char *get_dhcp_error_string() {
     return dhcp_lasterror();
 }
 
+// Engle, add for MTK, start
+#ifdef TARGET_MTK
+
+int is_wifi_driver_loaded() {
+    char driver_status[PROPERTY_VALUE_MAX];
+
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
+
+    if (!property_get(DRIVER_PROP_NAME, driver_status, NULL)
+            || strcmp(driver_status, "ok") != 0) {
+        if (DBG)
+            ALOGD("Check driver status: not loaded");
+
+        return 0;  /* driver not loaded */
+    }
+
+    if (DBG)
+        ALOGD("Check driver status: loaded");
+    return 1;
+}
+
+#else // NOT TARGET_MTK
+
 int is_wifi_driver_loaded() {
     char driver_status[PROPERTY_VALUE_MAX];
 #ifdef WIFI_DRIVER_MODULE_PATH
     FILE *proc;
     char line[sizeof(DRIVER_MODULE_TAG)+10];
 #endif
+
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
 
     if (!property_get(DRIVER_PROP_NAME, driver_status, NULL)
             || strcmp(driver_status, "ok") != 0) {
@@ -290,8 +317,13 @@ int is_wifi_driver_loaded() {
 #endif
 }
 
+#endif
+// Engle, add for MTK, end
+
 int wifi_load_driver()
 {
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
     wifi_set_power(1);
     property_set(DRIVER_PROP_NAME, "ok");
     return 0;
@@ -299,6 +331,8 @@ int wifi_load_driver()
 
 int wifi_unload_driver()
 {
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
     wifi_set_p2p_mod(0, 0);
     wifi_set_power(0);
     property_set(DRIVER_PROP_NAME, "unloaded");
@@ -358,6 +392,9 @@ int update_ctrl_interface(const char *config_file) {
     char *sptr;
     struct stat sb;
     int ret;
+
+	if (DBG)
+        ALOGD("%s:%d enter config file \"%s\"", __FUNCTION__, __LINE__, config_file);
 
     if (stat(config_file, &sb) != 0)
         return -1;
@@ -631,6 +668,9 @@ static int execute_nl_interface_cmd(const char *iface,
     int err;
     int add_interface = (cmd == NL80211_CMD_NEW_INTERFACE);
 
+	if (DBG)
+        ALOGD("%s:%d enter iface[%s]", __FUNCTION__, __LINE__, iface);
+
     if (add_interface) {
         devidx = phy_lookup();
     } else {
@@ -692,6 +732,9 @@ nla_put_failure:
 int add_remove_p2p_interface(int add)
 {
     int ret;
+
+    if (DBG)
+        ALOGD("%s:%d enter [%d]", __FUNCTION__, __LINE__, add);
 
     ret = init_nl();
     if (ret != 0)
@@ -991,6 +1034,8 @@ int wifi_stop_supplicant(int p2p_supported)
     int ret = 0;
     typedef void (*pal_set_wlan_down_t)();
     typedef void (*pal_send_wlan_off_event_t)();
+    if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
 
     /* Check whether supplicant already stopped */
     if (property_get(P2P_PROP_NAME, supp_status, NULL)
@@ -1287,6 +1332,9 @@ int wifi_wait_for_event(char *buf, size_t buflen)
 
 void wifi_close_sockets()
 {
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
+
     if (ctrl_conn != NULL) {
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = NULL;
@@ -1347,7 +1395,8 @@ int wifi_command(const char *command, char *reply, size_t *reply_len)
 
 const char *wifi_get_fw_path(int fw_type)
 {
-    ALOGD("wifi_get_fw_path - %d\n", fw_type);
+	if (DBG > 1)
+        ALOGD("wifi_get_fw_path - %d\n", fw_type);
     switch (fw_type) {
     case WIFI_GET_FW_PATH_STA:
         return WIFI_DRIVER_FW_PATH_STA;
