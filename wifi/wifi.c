@@ -264,7 +264,7 @@ const char *get_dhcp_error_string() {
 int is_wifi_driver_loaded() {
     char driver_status[PROPERTY_VALUE_MAX];
 
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
 
     if (!property_get(DRIVER_PROP_NAME, driver_status, NULL)
@@ -289,7 +289,7 @@ int is_wifi_driver_loaded() {
     char line[sizeof(DRIVER_MODULE_TAG)+10];
 #endif
 
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
 
     if (!property_get(DRIVER_PROP_NAME, driver_status, NULL)
@@ -327,7 +327,7 @@ int is_wifi_driver_loaded() {
 
 int wifi_load_driver()
 {
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
     wifi_set_power(1);
     property_set(DRIVER_PROP_NAME, "ok");
@@ -336,7 +336,7 @@ int wifi_load_driver()
 
 int wifi_unload_driver()
 {
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
     if (is_wifi_driver_loaded()) {
         wifi_set_p2p_mod(0, 0);
@@ -400,7 +400,7 @@ int update_ctrl_interface(const char *config_file) {
     struct stat sb;
     int ret;
 
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter config file \"%s\"", __FUNCTION__, __LINE__, config_file);
 
     if (stat(config_file, &sb) != 0)
@@ -675,7 +675,7 @@ static int execute_nl_interface_cmd(const char *iface,
     int err;
     int add_interface = (cmd == NL80211_CMD_NEW_INTERFACE);
 
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter iface[%s]", __FUNCTION__, __LINE__, iface);
 
     if (add_interface) {
@@ -802,13 +802,13 @@ int wifi_start_supplicant(int supplicantType)
             strcpy(supplicant_prop_name, AP_PROP_NAME);
             break;
         default:
-        	ALOGE("Unkown supplicant type [%d]");
-        	ret = -1;
+            ALOGE("Unkown supplicant type [%d]");
+            ret = -1;
             goto out;
     }
     
-	if (supplicantType) {
-    	 /* Ensure p2p config file is created */
+    if (supplicantType) {
+         /* Ensure p2p config file is created */
         if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
             ALOGE("Failed to create a p2p config file");
             ret = -1;
@@ -856,8 +856,7 @@ int wifi_start_supplicant(int supplicantType)
     }
 #endif
 
-/*
-	switch(supplicantType) {
+    switch(supplicantType) {
         case SUPPLICANT_STA:
             property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
             break;
@@ -868,12 +867,10 @@ int wifi_start_supplicant(int supplicantType)
             property_get("wifi.tethering.interface", primary_iface, WIFI_TEST_INTERFACE);
             break;
         default:
-        	ALOGE("Unkown supplicant type [%d]");
-        	ret = -1;
-            goto out;
-    }  */ 
-
-    property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
+            property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
+            break;
+    }
+    
     property_set("ctl.start", supplicant_name);
 
     if (DBG)
@@ -1362,7 +1359,7 @@ int wifi_wait_for_event(char *buf, size_t buflen)
 
 void wifi_close_sockets()
 {
-	if (DBG)
+    if (DBG)
         ALOGD("[%s] wifi_close_sockets", primary_iface);
 
     if (ctrl_conn != NULL) {
@@ -1420,16 +1417,16 @@ int wifi_command(const char *command, char *reply, size_t *reply_len)
             ret = wifi_send_command((const char*)&buf, reply, reply_len);
         } 
     } else {
-    	ret = wifi_send_command(command, reply, reply_len);
+        ret = wifi_send_command(command, reply, reply_len);
     }
     if (DBG)
-    	ALOGD("[%s] Set - %s\n And reply %s\n", command, reply);
+        ALOGD("[%s] Set - %s\n And reply %s\n", command, reply);
     return ret;
 }
 
 const char *wifi_get_fw_path(int fw_type)
 {
-	if (DBG > 1)
+    if (DBG > 1)
         ALOGD("wifi_get_fw_path - %d\n", fw_type);
     switch (fw_type) {
         case WIFI_GET_FW_PATH_STA:
@@ -1600,7 +1597,7 @@ int halDoMonitor(int sock) {
 }
 
 void wifi_set_p2p_mod(int enableP2P, int enableAP) {
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter, enableP2P %d, enableAP %d", __FUNCTION__, __LINE__, enableP2P, enableAP);
     if (enableP2P != 0) {
         if (enableAP != 0) {
@@ -1615,9 +1612,9 @@ void wifi_set_p2p_mod(int enableP2P, int enableAP) {
 }
 
 int wifi_ap_start_supplicant() {
-	if (DBG)
+    if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
-	return wifi_start_supplicant(WIFI_GET_FW_PATH_AP);
+    return wifi_start_supplicant(WIFI_GET_FW_PATH_AP);
 }
 #endif
 // Engle, add for MTK, end
