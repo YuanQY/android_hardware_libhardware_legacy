@@ -854,7 +854,21 @@ int wifi_start_supplicant(int supplicantType)
     }
 #endif
 
-    property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
+	switch(supplicantType) {
+        case SUPPLICANT_STA:
+            property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
+            break;
+        case SUPPLICANT_P2P:
+            property_get("wifi.direct.interface", primary_iface, WIFI_TEST_INTERFACE);
+            break;
+        case SUPPLICANT_AP:
+            property_get("wifi.tethering.interface", primary_iface, WIFI_TEST_INTERFACE);
+            break;
+        default:
+        	ALOGE("Unkown supplicant type [%d]");
+        	ret = -1;
+            goto out;
+    }   
 
     property_set("ctl.start", supplicant_name);
 
