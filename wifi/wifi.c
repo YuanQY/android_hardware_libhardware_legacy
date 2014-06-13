@@ -1047,7 +1047,7 @@ int wifi_stop_supplicant(int p2p_supported)
     typedef void (*pal_set_wlan_down_t)();
     typedef void (*pal_send_wlan_off_event_t)();
     if (DBG)
-        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
+        ALOGD("%s:%d enter, Stop \"%s\" [%d]", __FUNCTION__, __LINE__, supplicant_name, p2p_supported);
 
     /* Check whether supplicant already stopped */
     if (property_get(supplicant_prop_name, supp_status, NULL)
@@ -1056,11 +1056,11 @@ int wifi_stop_supplicant(int p2p_supported)
         goto out;
     }
 
-    property_set("ctl.stop", P2P_SUPPLICANT_NAME);
+    property_set("ctl.stop", supplicant_name);
     sched_yield();
 
     while (count-- > 0) {
-        if (property_get(P2P_PROP_NAME, supp_status, NULL)) {
+        if (property_get(supplicant_prop_name, supp_status, NULL)) {
             if (strcmp(supp_status, "stopped") == 0) {
                   ret = 0;
                   goto out;
