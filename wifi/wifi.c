@@ -1354,14 +1354,14 @@ int wifi_wait_for_event(char *buf, size_t buflen)
     // return wifi_wait_on_socket(buf, buflen);
     int ret = wifi_wait_on_socket(buf, buflen);
     if (DBG)
-        ALOGD("%s:%d %s", __FUNCTION__, __LINE__, buf);
+        ALOGD("[%s]GET \"%s\"", primary_iface, buf);
     return ret;
 }
 
 void wifi_close_sockets()
 {
 	if (DBG)
-        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
+        ALOGD("[%s] wifi_close_sockets", primary_iface);
 
     if (ctrl_conn != NULL) {
         wpa_ctrl_close(ctrl_conn);
@@ -1408,17 +1408,21 @@ int wifi_command(const char *command, char *reply, size_t *reply_len)
     char *match;
     int nCmdLengh = strlen(command);
     char buf[nCmdLengh];
+    int ret = -1;
     memset(buf, 0, nCmdLengh);
     if (strncmp(command, IFNAME, IFNAMELEN) == 0) {
         match = strchr(command, ' ');
         if (match != NULL) {
             match++;
             memcpy((void *)&buf, match, strlen(match));
-            return wifi_send_command((const char*)&buf, reply, reply_len);
+            ret = wifi_send_command((const char*)&buf, reply, reply_len);
         } 
+    } else {
+    	ret = wifi_send_command(command, reply, reply_len);
     }
-    // Engle, remove IFNAME= for old wifi driver, end
-    return wifi_send_command(command, reply, reply_len);
+    if (DBG)
+    	ALOGD("[%s] Set - %s\n And reply %s\n", command, reply);
+    return ret;
 }
 
 const char *wifi_get_fw_path(int fw_type)
@@ -1426,12 +1430,12 @@ const char *wifi_get_fw_path(int fw_type)
 	if (DBG > 1)
         ALOGD("wifi_get_fw_path - %d\n", fw_type);
     switch (fw_type) {
-    case WIFI_GET_FW_PATH_STA:
-        return WIFI_DRIVER_FW_PATH_STA;
-    case WIFI_GET_FW_PATH_AP:
-        return WIFI_DRIVER_FW_PATH_AP;
-    case WIFI_GET_FW_PATH_P2P:
-        return WIFI_DRIVER_FW_PATH_P2P;
+        case WIFI_GET_FW_PATH_STA:
+            return WIFI_DRIVER_FW_PATH_STA;
+        case WIFI_GET_FW_PATH_AP:
+            return WIFI_DRIVER_FW_PATH_AP;
+        case WIFI_GET_FW_PATH_P2P:
+            return WIFI_DRIVER_FW_PATH_P2P;
     }
     return NULL;
 }
