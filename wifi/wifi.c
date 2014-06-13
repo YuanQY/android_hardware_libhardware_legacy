@@ -807,7 +807,7 @@ int wifi_start_supplicant(int supplicantType)
             goto out;
     }
     
-	if (SUPPLICANT_STA != supplicantType) {
+	if (supplicantType) {
     	 /* Ensure p2p config file is created */
         if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
             ALOGE("Failed to create a p2p config file");
@@ -856,6 +856,7 @@ int wifi_start_supplicant(int supplicantType)
     }
 #endif
 
+/*
 	switch(supplicantType) {
         case SUPPLICANT_STA:
             property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
@@ -870,8 +871,9 @@ int wifi_start_supplicant(int supplicantType)
         	ALOGE("Unkown supplicant type [%d]");
         	ret = -1;
             goto out;
-    }   
+    }  */ 
 
+    property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
     property_set("ctl.start", supplicant_name);
 
     if (DBG)
