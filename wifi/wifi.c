@@ -787,26 +787,26 @@ int wifi_start_supplicant(int supplicantType)
         ALOGD(" wifi_start_supplicant [%d]", supplicantType);
 
     switch(supplicantType) {
-        case WIFI_GET_FW_PATH_STA:
+        case SUPPLICANT_STA:
             strcpy(supplicant_name, SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, SUPP_PROP_NAME);
             break;
-        case WIFI_GET_FW_PATH_P2P:
+        case SUPPLICANT_P2P:
             strcpy(supplicant_name, P2P_SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, P2P_PROP_NAME);
             break;
-        case WIFI_GET_FW_PATH_AP:
+        case SUPPLICANT_AP:
             strcpy(supplicant_name, AP_SUPPLICANT_NAME);
             strcpy(supplicant_prop_name, AP_PROP_NAME);
             break;
         default:
-        	ALOGE("Unkown type [%d]");
+        	ALOGE("Unkown supplicant type [%d]");
         	ret = -1;
             goto out;
     }
-
-	if (supplicantType != WIFI_GET_FW_PATH_STA) {
-        /* Ensure p2p config file is created */
+    
+	if (SUPPLICANT_STA != supplicantType) {
+    	 /* Ensure p2p config file is created */
         if (ensure_config_file_exists(P2P_CONFIG_FILE) < 0) {
             ALOGE("Failed to create a p2p config file");
             ret = -1;
@@ -1590,6 +1590,10 @@ void wifi_set_p2p_mod(int enableP2P, int enableAP) {
         halDoCommand("unload p2p");
         halDoCommand("unload hostspot");
     }
+}
+
+int wifi_ap_start_supplicant() {
+	wifi_start_supplicant(WIFI_GET_FW_PATH_AP);
 }
 #endif
 // Engle, add for MTK, end
