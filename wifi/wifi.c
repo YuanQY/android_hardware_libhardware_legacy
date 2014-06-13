@@ -338,9 +338,11 @@ int wifi_unload_driver()
 {
 	if (DBG)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
-    wifi_set_p2p_mod(0, 0);
-    wifi_set_power(0);
-    property_set(DRIVER_PROP_NAME, "unloaded");
+    if (is_wifi_driver_loaded()) {
+        wifi_set_p2p_mod(0, 0);
+        wifi_set_power(0);
+        property_set(DRIVER_PROP_NAME, "unloaded");
+    }
     return 0;
 }
 
