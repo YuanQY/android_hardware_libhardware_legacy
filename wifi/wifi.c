@@ -300,7 +300,7 @@ int wifi_load_driver()
 int wifi_unload_driver()
 {
     wifi_set_p2p_mod(0, 0);
-    wifi_set_power(1);
+    wifi_set_power(0);
     property_set(DRIVER_PROP_NAME, "unloaded");
     return 0;
 }
@@ -1416,7 +1416,7 @@ void wifi_set_power(int enable) {
     int len;
     const char buffer = (enable ? '1' : '0');
     if (DBG)
-        ALOGD("%s:%d enter, set pwoer to %d", __FUNCTION__, __LINE__, enable);
+        ALOGD("%s:%d enter, set power to %d", __FUNCTION__, __LINE__, enable);
 
     fd = open(WIFI_POWER_PATH, O_WRONLY);
     if (fd < 0) {
@@ -1436,7 +1436,7 @@ out:
 }
 
 void halDoCommand (const char* cmd) {
-      char *final_cmd;
+    char *final_cmd;
     int sock = socket_local_client("hald", ANDROID_SOCKET_NAMESPACE_RESERVED, SOCK_STREAM);
     if (sock < 0) {
         ALOGE("Error connecting (%s)", strerror(errno));
@@ -1456,8 +1456,7 @@ void halDoCommand (const char* cmd) {
 }
 
 int halDoMonitor(int sock) {
-      char *buffer = malloc(0x1000);
-
+    char *buffer = malloc(0x1000);
     fd_set read_fds;
     struct timeval to;
     int rc = 0;
@@ -1518,6 +1517,8 @@ int halDoMonitor(int sock) {
 }
 
 void wifi_set_p2p_mod(int enableP2P, int enableAP) {
+	if (DBG)
+        ALOGD("%s:%d enter, enableP2P %d, enableAP %d", __FUNCTION__, __LINE__, enableP2P, enableAP);
     if (enableP2P != 0) {
         if (enableAP != 0) {
             halDoCommand("load hostspot");
