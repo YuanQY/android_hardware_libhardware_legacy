@@ -1050,7 +1050,7 @@ int wifi_stop_supplicant(int p2p_supported)
         ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
 
     /* Check whether supplicant already stopped */
-    if (property_get(P2P_PROP_NAME, supp_status, NULL)
+    if (property_get(supplicant_prop_name, supp_status, NULL)
         && strcmp(supp_status, "stopped") == 0) {
         ret = 0;
         goto out;
@@ -1593,7 +1593,9 @@ void wifi_set_p2p_mod(int enableP2P, int enableAP) {
 }
 
 int wifi_ap_start_supplicant() {
-	wifi_start_supplicant(WIFI_GET_FW_PATH_AP);
+	if (DBG)
+        ALOGD("%s:%d enter", __FUNCTION__, __LINE__);
+	return wifi_start_supplicant(WIFI_GET_FW_PATH_AP);
 }
 #endif
 // Engle, add for MTK, end
