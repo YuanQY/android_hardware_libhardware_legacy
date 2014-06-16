@@ -1455,7 +1455,7 @@ int wifi_command(const char *command, char *reply, size_t *reply_len)
     }
     if (DBG)
         ALOGD("[%s] Set - \"%s\" %s\n", primary_iface, command,
-        strncmp(reply, "OK", 2) == 0 ? "OK" : "FAIL");
+        ret == 0 ? "OK" : "FAIL");
     return ret;
 }
 
