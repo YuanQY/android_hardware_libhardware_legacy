@@ -1161,6 +1161,7 @@ int wifi_stop_supplicant(int p2p_supported)
 int wifi_connect_on_socket_path(const char *path)
 {
     char supp_status[PROPERTY_VALUE_MAX] = {'\0'};
+    int count = 50; /* wait at most 5 seconds for completion */
 
     if (DBG)
         ALOGD("%s:%d path %s", __FUNCTION__, __LINE__,  path);
@@ -1172,7 +1173,15 @@ int wifi_connect_on_socket_path(const char *path)
         return -1;
     }
 
-    ctrl_conn = wpa_ctrl_open(path);
+    do {
+        ctrl_conn = wpa_ctrl_open(path);
+        if (ctrl_conn == NULL) {
+        	ALOGE("Unable to open connection to supplicant on \"%s\": %s, retry again",
+        	   path, strerror(errno));
+        	usleep(100000);
+        }
+    } while (count-- > 0 && ctrl_conn == NULL);
+
     if (ctrl_conn == NULL) {
         ALOGE("Unable to open connection to supplicant on \"%s\": %s",
              path, strerror(errno));
