@@ -1425,7 +1425,7 @@ int wifi_command(const char *command, char *reply, size_t *reply_len)
         ret = wifi_send_command(command, reply, reply_len);
     }
     if (DBG)
-        ALOGD("[%s] Set - %s\n And reply %s\n", command, reply);
+        ALOGD("[%s] Set - %s\n And reply %s\n", primary_iface, command, reply);
     return ret;
 }
 
