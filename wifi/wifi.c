@@ -858,10 +858,12 @@ int wifi_start_supplicant(int supplicantType)
 
     switch(supplicantType) {
         case SUPPLICANT_STA:
-            property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
-            break;
+            
         case SUPPLICANT_P2P:
-            property_get("wifi.direct.interface", primary_iface, WIFI_TEST_INTERFACE);
+        	if (1 == wifi_mode)
+                property_get("wifi.direct.interface", primary_iface, WIFI_TEST_INTERFACE);
+            else
+            	property_get("wifi.interface", primary_iface, WIFI_TEST_INTERFACE);
             break;
         case SUPPLICANT_AP:
             property_get("wifi.tethering.interface", primary_iface, WIFI_TEST_INTERFACE);
