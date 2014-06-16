@@ -820,7 +820,7 @@ int wifi_start_supplicant(int supplicantType)
     if (property_get(supplicant_name, supp_status, NULL)
             && strcmp(supp_status, "running") == 0) {
         if (DBG)
-            ALOGD("%s:%d get %s status %s", __FUNCTION__, __LINE__, supplicant_name, supp_status);
+            ALOGD("wifi_start_supplicant start \"%s\" OK", supplicant_name);
         ret = 0;
         goto out;
     }
@@ -893,10 +893,14 @@ int wifi_start_supplicant(int supplicantType)
         if (pi != NULL) {
             __system_property_read(pi, NULL, supp_status);
             if (strcmp(supp_status, "running") == 0) {
+            	if (DBG)
+                  	  ALOGD("wifi_start_supplicant start \"%s\" OK", supplicant_name);
                 ret = 0;
                 goto out;
             } else if (__system_property_serial(pi) != serial &&
                     strcmp(supp_status, "stopped") == 0) {
+                if (DBG)
+                  	  ALOGE("wifi_start_supplicant start \"%s\" FAIL", supplicant_name);
                 ret = -1;
                 goto out;
             }
@@ -907,6 +911,8 @@ int wifi_start_supplicant(int supplicantType)
                 ALOGD("%s:%d get %s status %s", __FUNCTION__, __LINE__, supplicant_prop_name, supp_status);
 
             if (strcmp(supp_status, "running") == 0) {
+            	if (DBG)
+                  	  ALOGD("wifi_start_supplicant start \"%s\" OK", supplicant_name);
                 ret = 0;
                 goto out;
             }
@@ -915,6 +921,8 @@ int wifi_start_supplicant(int supplicantType)
         usleep(100000);
     }
     ret = -1;
+    if (DBG)
+        ALOGE("wifi_start_supplicant start \"%s\" FAIL", supplicant_name);
 out:
    if (handle != NULL) {
        if (0 == ret) {
@@ -1074,6 +1082,8 @@ int wifi_stop_supplicant(int p2p_supported)
     /* Check whether supplicant already stopped */
     if (property_get(supplicant_prop_name, supp_status, NULL)
         && strcmp(supp_status, "stopped") == 0) {
+        if (DBG)
+        	ALOGD("wifi_stop_supplicant \"%s\" stopped", supplicant_name);
         ret = 0;
         goto out;
     }
@@ -1084,6 +1094,8 @@ int wifi_stop_supplicant(int p2p_supported)
     while (count-- > 0) {
         if (property_get(supplicant_prop_name, supp_status, NULL)) {
             if (strcmp(supp_status, "stopped") == 0) {
+                  if (DBG)
+                  	  ALOGD("wifi_stop_supplicant \"%s\" stopped", supplicant_name);
                   ret = 0;
                   goto out;
             }
