@@ -802,7 +802,7 @@ int wifi_start_supplicant(int supplicantType)
             strcpy(supplicant_prop_name, AP_PROP_NAME);
             break;
         default:
-            ALOGE("Unkown supplicant type [%d]");
+            ALOGE("Unkown supplicant type [%d]", supplicantType);
             ret = -1;
             goto out;
     }
