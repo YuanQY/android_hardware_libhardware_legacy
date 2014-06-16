@@ -1189,11 +1189,15 @@ int wifi_connect_on_socket_path(const char *path)
     }
     monitor_conn = wpa_ctrl_open(path);
     if (monitor_conn == NULL) {
+    	ALOGE("Unable to open monitor connection to supplicant on \"%s\": %s",
+             path, strerror(errno));
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = NULL;
         return -1;
     }
     if (wpa_ctrl_attach(monitor_conn) != 0) {
+    	ALOGE("Unable to attach monitor connection to supplicant on \"%s\": %s",
+             path, strerror(errno));
         wpa_ctrl_close(monitor_conn);
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = monitor_conn = NULL;
@@ -1201,6 +1205,8 @@ int wifi_connect_on_socket_path(const char *path)
     }
 
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, exit_sockets) == -1) {
+    	ALOGE("Unable to socket pair to supplicant on \"%s\": %s",
+             path, strerror(errno));
         wpa_ctrl_close(monitor_conn);
         wpa_ctrl_close(ctrl_conn);
         ctrl_conn = monitor_conn = NULL;
